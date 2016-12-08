@@ -1,0 +1,24 @@
+{
+  "name": "pro-roof",
+  "version": "1.0.0",
+  "description": "server for pro-roofing apps",
+  "main": "server.js",
+  "dependencies": {
+    "bcrypt-nodejs": "0.0.3",
+    "body-parser": "~1.15.1",
+    "cluster-node-cache": "^0.1.0",
+    "express": "~4.13.4",
+    "glob": "^7.1.1",
+    "helmet": "^3.1.0",
+    "jsonwebtoken": "^6.2.0",
+    "mongoose": "~4.4.17",
+    "morgan": "~1.7.0",
+    "node-cache": "^4.1.0",
+    "request": "^2.79.0"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Ashish Taldeokar",
+  "license": "ISC"
+}
