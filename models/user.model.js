@@ -1,11 +1,14 @@
 'use strict';
 
 var mongoose = require('mongoose'),
-	Schema = mongoose.Schema;
+	Schema = mongoose.Schema,
+	crypto = require('crypto');	
 
 /**
  * User Schema
  */
+
+var model;
 
 var UserSchema = new Schema({
 	firstName: {
@@ -22,7 +25,8 @@ var UserSchema = new Schema({
 	},
 	displayName: {
 		type: String,
-		trim: true
+		trim: true,
+		default : 'not yet provided'
 	},
 	email: {
 		type: String,
@@ -33,32 +37,61 @@ var UserSchema = new Schema({
 	},
 	mobile: {
 		type: String,
-		trim: true,
+		required : true,
+		unique	: true,
 		default : 'not yet provided'
 	},
-	token: {
-		type: [{
-			type : String
-		}],
-		//required: 'No token provided!',
-		//validate: [validateToken, 'Token Invalid']
+	webToken : {
+		type : String
+	},
+	mobileToken : {
+		type : String
 	},
 	password:{
 		type : String,
+	},
+	salt : {
+		type : String
 	},
 	provider: {
 		type: String,
 		//required: 'Provider is required'
 	},
-	providerData: {},
-	additionalProvidersData: {},
-	roles: {
-		type: [{
-			type: String,
-			enum: ['roofer', 'admin', 'team_leader']
-		}],
-		default: ['roofer']
+	designation : {
+		type : String,
+		enum: ['admin','manager','roofer']
 	},
+	providerData: {},
+	authorizationCode : {
+		type : Number
+	},
+	companyId : {
+		type : String,
+		required : "Company id required"
+	},
+	projects : {
+		type : [{
+			project_id : String,
+			roles : {
+				type :[{
+	 				type: String,
+	 				enum: ['roofer', 'team_leader', 'service_man']
+	 			}],
+				default : 'roofer'
+			}
+		}]
+	},
+	isActive : {
+			type : Boolean
+		},
+	additionalProvidersData: {},
+	// roles: {
+	// 	type: [{
+	// 		type: String,
+	// 		enum: ['roofer', 'admin', 'team_leader']
+	// 	}],
+	// 	default: ['roofer']
+	// },
 	updated: {
 		type: Date
 	},
@@ -71,24 +104,80 @@ var UserSchema = new Schema({
 /**
  * Hook a pre save method
  */
-UserSchema.pre('save', (next) => {
-	//var self = this;
-	console.log("data here is",this)
-	next();
+
+UserSchema.pre("save", function(next) {
+	console.log("saving user")
+	let self = this;
+	if(!self.mobile && !self.email)
+		return next(new Error("Please provide email and mobile"))
+
+	if(self.designation === 'roofer'){
+		model.findOne({mobile : self.mobile}, 'mobile' , function(err,result){
+			if(err){
+				return next(err);
+			}
+			else if(result){
+				return next(new Error("Mobile already exist"));
+			}
+
+			self.authorizationCode = 8;
+			return next();
+		})
+	}	
+
+	model.findOne({email : self.email}, 'email',function(err,result){
+		if(err){
+			return next(err);
+		}
+		else if(result){
+			return next(new Error("Email already exist"));
+		}
+
+		if (self.password && self.isModified('password')) {
+    		self.salt = crypto.randomBytes(16).toString('base64');
+    		self.password = self.hashPassword(self.password);
+  		}
+		switch (self.designation) {
+			case 'admin' :
+				self.authorizationCode = 14;
+				break;
+			case 'manager':
+				self.authorizationCode = 12;
+				break;
+			default :
+				self.authorizationCode = 8;
+				break;		
+		}
+		next();
+	})
 });
+
+UserSchema.methods.hashPassword = function (password) {
+  if (this.salt && password) {
+    return crypto.pbkdf2Sync(password, new Buffer(this.salt, 'base64'), 10000, 64, 'SHA1').toString('base64');
+  } else {
+    return password;
+  }
+};
+
+
+UserSchema.methods.authenticate = function (password) {
+  return this.password === this.hashPassword(password);
+};
+
 
 /**
  * Hook validations for saving data
  */
-var validateName = (name) => {
+let validateName = (name) => {
     //check for invalid names
     return /^[a-zA-Z ]{3,}$/.test(name)
 }
 
-var validateToken = (token) => {
+let validateToken = (token) => {
     //validate token
     return true
 }
 
 
-module.exports = mongoose.model('User', UserSchema);
+module.exports = model = mongoose.model('User', UserSchema);

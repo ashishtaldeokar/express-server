@@ -37,38 +37,21 @@ app.get('/test',(req,res) => {
         res.json({msg : "no token required here"});
     })
 
-app.post('/signup',auth.createUser);
-app.post('/authenticate',auth.authenticateUser)
-
-app.post('/generateOTP',(req,res,next) =>{ 
-    console.log(req.body.mobile) 
-    next()
-},auth.generateOTP);
-app.post('/verifyOTP',auth.verifyOTP);
-
-
 // get an instance of the express for protected api
 const apiRouter = express.Router();
 // get an instance of the express for open api
 const openRouter = express.Router();
 
-
-// route middleware to verify a token
-apiRouter.use(auth.verifyToken);
-// api endpoint to get user information
-apiRouter.get('/me', (req, res) => {
-	res.send(req.user);
-});
-
 // log all requests to the console
 app.use(morgan('dev'));
 
 //glob user routes
-glob('./*/*.routes.js',null,(err,files) => {
+glob('./routes/*.routes.js',null,(err,files) => {
     files.map((path)=>{
         require('.'+path)(openRouter,apiRouter)
     })
-}) 
+})
+apiRouter.use(auth.verfiyToken); 
 
 // REGISTER OUR ROUTES -------------------------------
 app.use('/api', apiRouter);
