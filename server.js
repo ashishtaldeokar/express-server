@@ -1,7 +1,7 @@
 const cluster	= require('cluster');
 const cache = require('cluster-node-cache')(cluster);
 const numCPUs	= require('os').cpus().length || 1;
-const port		= process.env.PORT || 8080; // set the port for our app
+const port		= process.env.PORT || 3000; // set the port for our app
 
 
 
@@ -24,5 +24,5 @@ if (numCPUs > 1 && cluster.isMaster) {
 	console.log("I am slave / single CPU")
 	const app = require('./helper/config')(cache); //load app synchronously one time on each cluster
 	app.listen(port);
-	console.log('Magic happens on port ' + port,'with PID :',cluster.worker.process.pid);
+	console.log('Magic happens on port ' + port);
 }
