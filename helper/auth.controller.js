@@ -67,14 +67,19 @@ module.exports = {
                                         if(err){
                                             return res.json({
                                                 verified: false,
-                                                message: 'Server Error'
+                                                message: 'Server Error',
+                                                status : 500
                                             });
                                         }
                                         else{
+                                            //remove sensitive data
+                                            user.password = user.salt = user.created = user.updated = undefined;
+                                            user.webToken = user.mobileToken = user.authorizationCode = undefined;
                                             return res.json({
                                                 verified: true,
-                                                message: 'Enjoy your token!',
-                                                token: token
+                                                user: user,
+                                                token: token,
+                                                status : 200
                                             });
                                         }    
                                     })
@@ -82,7 +87,7 @@ module.exports = {
                             })
                         }
                         else{
-                            return res.status(400).json({status : false, message : "Invalid credential format"})
+                            return res.status(400).json({status : 403, message : "Invalid credential format"})
                         }
                     },
     logout : (req,res) => {
